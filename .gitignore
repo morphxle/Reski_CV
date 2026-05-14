@@ -2,5 +2,21 @@ venv/
 .pycache_cli/
 __pycache__/
 *.py[cod]
-.DS_Store
 logs/*.log
+
+# macOS
+.DS_Store
+.AppleDB
+.AppleDesktop
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDiskChange
+
