@@ -116,4 +116,5 @@ Schreibt nach **`logs/schussauswertung.log`** (rotierend), zusätzlich Konsolen-
 
 ## Lizenz
 
-Keine Lizenz im Repository hinterlegt — bei Bedarf ergänzen.
+[MIT](LICENSE) — kurz: frei nutzen, ändern und weitergeben; der Lizenztext und der Copyright-Hinweis sollen bei Weitergabe des Codes dabeibleiben. Keine Garantie (Software „wie sie ist“).
+
