@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schussauswertung</title>
+  <style>
+    :root { --bg: #121418; --panel: #1a1d24; --border: #2a3040; --text: #e8eaef; --muted: #9aa3b2; --accent: #3d8bfd; --ok: #2d6a4f; --err: #6a2d2d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .layout { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; align-items: flex-start; }
+    .preview { flex: 1 1 420px; max-width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .preview img { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; min-height: 200px; object-fit: contain; }
+    .preview p { margin: 8px 0 0; font-size: 0.85rem; color: var(--muted); }
+    .settings { flex: 1 1 380px; max-width: 560px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    fieldset { border: 1px solid var(--border); border-radius: 6px; margin: 0 0 14px; padding: 12px 14px; }
+    legend { padding: 0 6px; color: var(--muted); font-size: 0.8rem; }
+    label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; margin-top: 10px; }
+    label:first-of-type { margin-top: 0; }
+    input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 8px 10px; border-radius: 4px; border: 1px solid var(--border); background: #0e1014; color: var(--text); font-size: 0.9rem; }
+    textarea { min-height: 120px; font-family: ui-monospace, monospace; font-size: 0.82rem; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { margin-top: 16px; padding: 10px 18px; border-radius: 6px; border: none; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+    button:hover { filter: brightness(1.08); }
+    .banner { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.9rem; }
+    .banner.ok { background: var(--ok); color: #d8f3e7; }
+    .banner.err { background: var(--err); color: #fcd4d4; }
+    .hint { font-size: 0.78rem; color: var(--muted); margin-top: 12px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Schussauswertung — Web</h1>
+    {% if access_token %}<span style="font-size:0.8rem;color:var(--muted)">Zugriff geschützt (token)</span>{% endif %}
+  </header>
+  <div class="layout">
+    <section class="preview">
+      <img src="{{ stream_src }}" alt="Vorschau" />
+      <p>MJPEG, niedrige Framerate. Zweite Videoquelle zum HDMI-Prozess; bei <code>DEV_MODE=1</code> dieselbe lokale Datei wie <code>main.py</code>. Im Modus <strong>entzerrt</strong> mit Kalibrierung: grünes Kreuz = Scheibenmitte, Kreise = Ringgrenzen aus der YAML. Trefferliste und Trefferkreise wie am HDMI nur in <code>main.py</code>.</p>
+    </section>
+    <section class="settings">
+      {% if err %}<div class="banner err">{{ err }}</div>{% endif %}
+      {% if msg %}<div class="banner ok">{{ msg }}</div>{% endif %}
+      <form method="post" action="/save">
+        {% if token %}<input type="hidden" name="token" value="{{ token }}" />{% endif %}
+        <fieldset>
+          <legend>Stream &amp; Geometrie</legend>
+          <label for="rtsp_url">RTSP-URL (wenn kein DEV_MODE)</label>
+          <input type="text" id="rtsp_url" name="rtsp_url" value="{{ rtsp_url }}" autocomplete="off" />
+          <label for="dev_video_path">Dev-Video (relativ zum Projekt, bei <code>DEV_MODE=1</code>)</label>
+          <input type="text" id="dev_video_path" name="dev_video_path" value="{{ dev_video_path }}" autocomplete="off" />
+          <div class="row2">
+            <div>
+              <label for="warp_w">Warp Breite</label>
+              <input type="number" id="warp_w" name="warp_w" min="64" max="4096" value="{{ warp_w }}" />
+            </div>
+            <div>
+              <label for="warp_h">Warp Höhe</label>
+              <input type="number" id="warp_h" name="warp_h" min="64" max="4096" value="{{ warp_h }}" />
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Erkennung</legend>
+          <div class="row2">
+            <div>
+              <label for="diff_threshold">diff_threshold</label>
+              <input type="number" id="diff_threshold" name="diff_threshold" min="1" max="255" value="{{ diff_threshold }}" />
+            </div>
+            <div>
+              <label for="min_blob_area">min_blob_area</label>
+              <input type="number" id="min_blob_area" name="min_blob_area" min="1" value="{{ min_blob_area }}" />
+            </div>
+            <div>
+              <label for="morph_kernel">morph_kernel</label>
+              <input type="number" id="morph_kernel" name="morph_kernel" min="1" max="31" value="{{ morph_kernel }}" />
+            </div>
+            <div>
+              <label for="cooldown_frames">cooldown_frames</label>
+              <input type="number" id="cooldown_frames" name="cooldown_frames" min="0" value="{{ cooldown_frames }}" />
+            </div>
+          </div>
+          <label for="ring_fractions">Ringgrenzen (0–1, z. B. eine Zeile pro Wert oder kommagetrennt)</label>
+          <textarea id="ring_fractions" name="ring_fractions" rows="6">{{ ring_fractions }}</textarea>
+        </fieldset>
+        <fieldset>
+          <legend>HDMI-Anzeige (main.py)</legend>
+          <div class="row2">
+            <div>
+              <label for="panel_width">panel_width</label>
+              <input type="number" id="panel_width" name="panel_width" min="80" value="{{ panel_width }}" />
+            </div>
+            <div>
+              <label for="window_name">window_name</label>
+              <input type="text" id="window_name" name="window_name" value="{{ window_name }}" />
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Pfade (relativ zum Projektroot)</legend>
+          <label for="data_dir">data_dir</label>
+          <input type="text" id="data_dir" name="data_dir" value="{{ data_dir }}" />
+          <label for="calibration_file">calibration_file</label>
+          <input type="text" id="calibration_file" name="calibration_file" value="{{ calibration_file }}" />
+          <label for="reference_file">reference_file</label>
+          <input type="text" id="reference_file" name="reference_file" value="{{ reference_file }}" />
+          <label for="hits_log_file">hits_log_file</label>
+          <input type="text" id="hits_log_file" name="hits_log_file" value="{{ hits_log_file }}" />
+        </fieldset>
+        <fieldset>
+          <legend>Kalibrierung (optional, <code>coords.json</code>)</legend>
+          <label for="calibration_json">JSON: Objekt mit <code>corners</code> (4 Punkte) und optional <code>disc_center_warp</code> — oder nur Array der 4 Punkte</label>
+          <textarea id="calibration_json" name="calibration_json" rows="5" placeholder='{"corners": [[x,y],...]}'>{{ calibration_json }}</textarea>
+        </fieldset>
+        <fieldset>
+          <legend>Web-Vorschau</legend>
+          <div class="row2">
+            <div>
+              <label for="web_host">Bind-Adresse</label>
+              <input type="text" id="web_host" name="web_host" value="{{ web_host }}" />
+            </div>
+            <div>
+              <label for="web_port">Port</label>
+              <input type="number" id="web_port" name="web_port" min="1" max="65535" value="{{ web_port }}" />
+            </div>
+            <div>
+              <label for="preview_fps">Vorschau FPS</label>
+              <input type="number" id="preview_fps" name="preview_fps" step="0.5" min="0.25" max="30" value="{{ preview_fps }}" />
+            </div>
+            <div>
+              <label for="stream_scale">JPEG-Skalierung (0.1–1)</label>
+              <input type="number" id="stream_scale" name="stream_scale" step="0.05" min="0.1" max="1" value="{{ stream_scale }}" />
+            </div>
+          </div>
+          <label for="preview_mode">Vorschau-Modus</label>
+          <select id="preview_mode" name="preview_mode">
+            <option value="warped" {% if preview_mode|lower == 'warped' %}selected{% endif %}>entzerrt (warped)</option>
+            <option value="raw" {% if preview_mode|lower == 'raw' %}selected{% endif %}>Rohbild (raw)</option>
+          </select>
+          <label for="access_token">Zugangs-Token (optional, leer = aus)</label>
+          <input type="text" id="access_token" name="access_token" value="{{ access_token }}" autocomplete="off" placeholder="leer oder geheimes Wort" />
+        </fieldset>
+        <button type="submit">Speichern</button>
+      </form>
+      <p class="hint">Die HDMI-App (<code>main.py</code>) liest die YAML beim Start. Nach Änderungen an RTSP, Warp, Erkennung usw. bitte <code>main.py</code> bzw. den zugehörigen Dienst neu starten. Port/Bind-Adresse dieses Webservers wirken erst nach Neustart von <code>web_server.py</code>.</p>
+      <p class="hint">Lokal testen (z. B. Raspberry Pi Desktop x86 in Parallels): <code>export DEV_MODE=1</code> und optional <code>export DEV_VIDEO_PATH=/pfad/video.mp4</code> — dann wird <code>dev_video_path</code> aus der YAML ignoriert, wenn <code>DEV_VIDEO_PATH</code> gesetzt ist.</p>
+    </section>
+  </div>
+</body>
+</html>

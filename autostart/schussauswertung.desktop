@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Schussauswertung
+Comment=RTSP Trefferauswertung Vollbild
+# Pfade anpassen (Projektroot + venv)
+Exec=/bin/bash -lc '/home/pi/schussauswertung/scripts/run_kiosk.sh'
+X-GNOME-Autostart-enabled=true
+Terminal=false

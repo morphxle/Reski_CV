@@ -1,0 +1,56 @@
+# --- Update / Kopie zwischen Rechnern ---
+# Deine Einstellungen stecken hier UND unter data/ (coords.json, reference.png, …).
+# Code aktualisieren ohne Neu-Konfiguration: nur schussauswertung/, main.py, web_server.py,
+# templates/, scripts/, requirements.txt rüberziehen — config/ und data/ auf dem Ziel-PC
+# unverändert lassen. Oder: SCHUSS_CFG=/pfad/zur/eigenen.yaml auf eine Datei AUSSERHALB des
+# Projektordners zeigen, die du nie überschreibst.
+
+# RTSP-URL der Kamera (H.264 empfohlen, niedrige Latenz)
+rtsp_url: "rtsp://192.168.1.100:554/stream"
+
+# Nur wenn Umgebungsvariable DEV_MODE=1: lokale Testdatei (Endlosschleife)
+dev_video_path: "test_video.mp4"
+
+# Ausgabe der perspektivisch entzerrten Scheibe (Breite x Höhe)
+warp_size: [900, 900]
+
+# Ringgrenzen als Anteil des Scheibenradius (1.0 = Außenrand).
+# Wert i entspricht Ring (10-i) wenn 10 Ringe: innerster Bereich < ring_fractions[0]
+# Beispiel: 10 Ringe, gleichmäßig — anpassen an echte Scheibe
+ring_fractions:
+  - 0.10
+  - 0.20
+  - 0.30
+  - 0.40
+  - 0.50
+  - 0.60
+  - 0.70
+  - 0.80
+  - 0.90
+  - 1.00
+
+# Frame-Differencing
+diff_threshold: 25
+min_blob_area: 80
+morph_kernel: 5
+cooldown_frames: 15
+
+# Anzeige
+panel_width: 320
+window_name: "Schussauswertung"
+
+# Pfade (relativ zum Arbeitsverzeichnis)
+data_dir: "data"
+calibration_file: "data/coords.json"
+reference_file: "data/reference.png"
+hits_log_file: "data/hits.jsonl"
+
+# Web-Oberfläche (eigener Prozess: python web_server.py)
+web:
+  host: "0.0.0.0"
+  port: 8080
+  preview_fps: 4
+  stream_scale: 0.45
+  preview_mode: "warped"
+  # Optional: gleicher Wert als Query ?token=… für /stream und POST /save
+  access_token: ""

@@ -1,0 +1,20 @@
+[Unit]
+Description=Schussauswertung HDMI (RTSP / OpenCV)
+After=graphical.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Anpassen: Benutzer und Projektverzeichnis
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/schussauswertung
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+Environment=SCHUSS_CFG=/home/pi/schussauswertung/config/default_config.yaml
+ExecStart=/usr/bin/bash /home/pi/schussauswertung/scripts/run_kiosk.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

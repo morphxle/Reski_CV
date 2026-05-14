@@ -1,0 +1,17 @@
+[Unit]
+Description=Schussauswertung Web-UI (MJPEG + Einstellungen)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/schussauswertung
+Environment=SCHUSS_CFG=/home/pi/schussauswertung/config/default_config.yaml
+ExecStart=/home/pi/schussauswertung/venv/bin/python /home/pi/schussauswertung/web_server.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
